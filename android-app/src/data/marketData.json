@@ -1,0 +1,6 @@
+[
+  { "crop": "Wheat", "price": 2200, "change24h": -0.5, "unit": "₹ / quintal" },
+  { "crop": "Rice", "price": 2500, "change24h": 1.2, "unit": "₹ / quintal" },
+  { "crop": "Sugar", "price": 3200, "change24h": -1.1, "unit": "₹ / quintal" },
+  { "crop": "Cotton", "price": 5800, "change24h": 0.8, "unit": "₹ / quintal" }
+]

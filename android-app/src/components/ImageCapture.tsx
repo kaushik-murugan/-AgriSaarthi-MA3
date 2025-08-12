@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Button, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 interface ImageCaptureProps {
@@ -27,15 +27,34 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({ onImageCaptured }) => {
 
   return (
     <View style={styles.container}>
-      <Button title="Capture Crop Image" onPress={takePhoto} />
+      <TouchableOpacity style={styles.captureButton} onPress={takePhoto}>
+        <Text style={styles.buttonText}>Capture Crop Image</Text>
+      </TouchableOpacity>
       {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { marginVertical: 10 },
-  image: { width: 200, height: 200, marginTop: 10, borderRadius: 8 },
+  container: { marginVertical: 10, alignItems: 'center' },
+  captureButton: {
+    backgroundColor: '#047857', // Emerald green matching your theme
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  image: {
+    width: 200,
+    height: 200,
+    marginTop: 10,
+    borderRadius: 8,
+  },
 });
 
 export default ImageCapture;
