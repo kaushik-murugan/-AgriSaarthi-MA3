@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import ChatInput from '../components/ChatInput';
 import ImageCapture from '../components/ImageCapture';
-import { useAskAgri } from '../hooks/useAskAgri';
-import { ThemeContext } from '../context/ThemeContext'; // import ThemeContext
+import { ThemeContext } from '../context/ThemeContext';
+import { askGemini } from '../api/agriApi';
 
 interface Message {
   from: 'user' | 'bot';
@@ -21,11 +21,10 @@ interface Message {
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([
-    { from: 'bot', text: 'Hello! How can I help you today?' },
+    { from: 'bot', text: 'Hello! How can I help you with farming today?' },
   ]);
-
-  const mutation = useAskAgri();
-  const { isDark } = useContext(ThemeContext); // get dark mode value
+  const [isLoading, setIsLoading] = useState(false);
+  const { isDark } = useContext(ThemeContext);
 
   const sendQuery = async (text: string, imageUri?: string) => {
     if (!text && !imageUri) {
@@ -43,35 +42,42 @@ export default function ChatScreen() {
 
     // Loading bubble
     setMessages((prev) => [...prev, { from: 'bot', text: '...' }]);
-
-    // Prepare FormData
-    const formData = new FormData();
-    if (text) formData.append('question', text);
-    if (imageUri) {
-      formData.append('image', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'photo.jpg',
-      } as any);
-    }
+    setIsLoading(true);
 
     try {
-      const data = await mutation.mutateAsync(formData);
-      const answer = (data as any).answer || 'No answer received';
+      const formData = new FormData();
+      formData.append('question', text);
+
+      if (imageUri) {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        formData.append('image', blob, 'photo.jpg');
+      }
+
+      const result = await askGemini(formData);
+
+      const answer =
+        result.answer ||
+        "No answer received";
+
+      // Update bot reply
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = { from: 'bot', text: answer };
         return updated;
       });
     } catch (err) {
+      console.error("Gemini API error:", err);
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = {
           from: 'bot',
-          text: '⚠ Error getting response from backend.',
+          text: '⚠ Error getting response from the backend.',
         };
         return updated;
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -79,7 +85,7 @@ export default function ChatScreen() {
     <KeyboardAvoidingView
       style={[
         styles.container,
-        { backgroundColor: isDark ? '#121212' : '#F9FAFB' } // background in dark/light
+        { backgroundColor: isDark ? '#121212' : '#F9FAFB' }
       ]}
       behavior={Platform.select({ ios: 'padding', android: undefined })}
     >
@@ -100,7 +106,7 @@ export default function ChatScreen() {
                   }
             ]}
           >
-            {mutation.isPending && msg.text === '...' ? (
+            {isLoading && msg.text === '...' ? (
               <ActivityIndicator color="#047857" />
             ) : (
               <Text
@@ -118,14 +124,14 @@ export default function ChatScreen() {
         ))}
       </ScrollView>
 
-      {/* Image capture feature */}
+      {/* Image capture */}
       <ImageCapture
         onImageCaptured={(uri) => {
           sendQuery('', uri);
         }}
       />
 
-      {/* Text + Voice input */}
+      {/* Text input */}
       <ChatInput
         onSend={(text) => {
           sendQuery(text);
