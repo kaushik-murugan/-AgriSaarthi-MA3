@@ -1,4 +1,5 @@
-// src/api/weatherApi.ts
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
 
 const weatherApi = axios.create({
@@ -22,20 +23,42 @@ export interface WeatherData {
   timezone: string;
 }
 
-export const fetchWeather = async (lat: number, lon: number): Promise<WeatherData> => {
-  try {
-    const response = await weatherApi.get('/forecast', {
-      params: {
-        latitude: lat,
-        longitude: lon,
-        daily: 'temperature_2m_max,temperature_2m_min,precipitation_probability_mean',
-        current_weather: true,
-        timezone: 'auto',
-      },
-    });
-    return response.data as WeatherData;
-  } catch (error) {
-    console.error('Weather API Error:', error);
-    throw new Error('Failed to fetch weather data');
+/**
+ * Fetches weather data either online (and caches it) or falls back to cached data if offline or failed.
+ */
+export const fetchWeather = async (lat: number, lon: number): Promise<{
+  data: WeatherData | null;
+  source: 'online' | 'offline';
+  lastUpdate?: string;
+}> => {
+  const network = await NetInfo.fetch();
+
+  if (network.isConnected) {
+    try {
+      const response = await weatherApi.get('/forecast', {
+        params: {
+          latitude: lat,
+          longitude: lon,
+          daily: 'temperature_2m_max,temperature_2m_min,precipitation_probability_mean',
+          current_weather: true,
+          timezone: 'auto',
+        },
+      });
+      const data = response.data as WeatherData;
+      await AsyncStorage.setItem('weatherData', JSON.stringify(data));
+      await AsyncStorage.setItem('weatherData_lastUpdate', new Date().toISOString());
+      return { data, source: 'online' };
+    } catch (error) {
+      console.warn('Weather API fetch failed, loading cached data', error);
+    }
   }
+
+  // Offline or fetch failed — load from cache
+  const cached = await AsyncStorage.getItem('weatherData');
+  const lastUpdate = await AsyncStorage.getItem('weatherData_lastUpdate');
+  return {
+    data: cached ? (JSON.parse(cached) as WeatherData) : null,
+    source: 'offline',
+    lastUpdate: lastUpdate || undefined,
+  };
 };

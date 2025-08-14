@@ -1,63 +1,44 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
-import { fetchMarketPrices, CropPrice } from '../api/marketApi';
-import ScreenWrapper from '../components/ScreenWrapper';
-import Card from '../components/Card';
-import { ThemeContext } from '../context/ThemeContext';
+import React from 'react';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { useOfflineData } from '../hooks/useOfflineData';
+import { fetchMarketPrices } from '../api/marketApi';
+import DataStatus from '../components/DataStatus';
 
 export default function MarketPricesScreen() {
-  const { isDark } = useContext(ThemeContext);
-  const [loading, setLoading] = useState(true);
-  const [prices, setPrices] = useState<CropPrice[]>([]);
+  const { data: prices, lastUpdate, source, loading } = useOfflineData({
+    fetchFn: async () => {
+      const { data } = await fetchMarketPrices();
+      return data;
+    },
+    storageKey: 'marketPrices'
+  });
 
-  useEffect(() => {
-    fetchMarketPrices()
-      .then(data => {
-        setPrices(data);
-        setLoading(false);
-      })
-      .catch(error => {
-        Alert.alert('Error', error.message || 'Failed to load market prices.');
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return (
-      <ScreenWrapper>
-        <ActivityIndicator size="large" color={isDark ? '#A7F3D0' : '#047857'} />
-      </ScreenWrapper>
-    );
-  }
+  if (loading) return <ActivityIndicator style={styles.center} size="large" />;
 
   return (
-    <ScreenWrapper>
-      <View style={{ padding: 16 }}>
-        <Text style={[styles.header, { color: isDark ? '#A7F3D0' : '#047857' }]}>Market Prices</Text>
-        <FlatList
-          data={prices}
-          keyExtractor={(item, index) => `${item.crop}-${index}`}
-          renderItem={({ item }) => (
-            <Card>
-              <View style={styles.row}>
-                <Text style={[styles.crop, { color: isDark ? '#FFF' : '#111827' }]}>{item.crop}</Text>
-                <Text style={[styles.price, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>
-                  {item.price} {item.unit}
-                </Text>
-                <Text style={[styles.market, { color: isDark ? '#A7F3D0' : '#047857' }]}>{item.market}</Text>
-              </View>
-            </Card>
-          )}
-        />
-      </View>
-    </ScreenWrapper>
+    <View style={styles.container}>
+      <Text style={styles.heading}>Market Prices</Text>
+      <DataStatus source={source} lastUpdate={lastUpdate} />
+
+      <FlatList
+        data={prices || []}
+        keyExtractor={(_, i) => i.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text style={styles.crop}>🌾 {item.crop} – ₹{item.price} {item.unit}</Text>
+            <Text style={styles.details}>📍 {item.market} | 📆 {item.date}</Text>
+          </View>
+        )}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { fontSize: 20, fontWeight: '700', marginBottom: 12 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  crop: { fontSize: 18, fontWeight: '600' },
-  price: { fontSize: 16 },
-  market: { fontSize: 14, fontStyle: 'italic' },
+  container: { flex: 1, padding: 16 },
+  heading: { fontWeight: 'bold', fontSize: 18 },
+  item: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ddd' },
+  crop: { fontSize: 16 },
+  details: { fontSize: 12, color: '#555' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
