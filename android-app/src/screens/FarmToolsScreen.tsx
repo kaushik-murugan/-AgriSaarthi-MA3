@@ -1,40 +1,72 @@
-import React from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { ScrollView, View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import * as Location from 'expo-location';
+import { fetchWeather, WeatherData } from '../api/weatherApi';
+import { ThemeContext } from '../context/ThemeContext';
+import { useLocalization } from '../context/LanguageContext';
 
 export default function FarmToolsScreen() {
+  const { t } = useLocalization();
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { isDark } = useContext(ThemeContext);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(t('permission_needed'), t('location_access_required'));
+        setLoading(false);
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({});
+      const { data } = await fetchWeather(loc.coords.latitude, loc.coords.longitude);
+      setWeather(data);
+      setLoading(false);
+    })();
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Essential Farming Resources and Tools</Text>
+      <Text style={styles.header}>{t('essential_farming_resources')}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.title}>Today's Temp: 28°C</Text>
-        <Text style={styles.text}>Perfect for farming</Text>
-        <Text style={styles.title}>Rain Forecast: 40%</Text>
-        <Text style={styles.text}>Chance of rain</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#047857" />
+        ) : weather ? (
+          <>
+            <Text style={styles.title}>{t('todays_temp')}: {Math.round(weather.current_weather.temperature)}°C</Text>
+            <Text style={styles.text}>{t('perfect_for_farming')}</Text>
+            <Text style={styles.title}>{t('rain_forecast')}: {weather.daily.precipitation_probability_mean[0]}%</Text>
+            <Text style={styles.text}>{t('chance_of_rain')}</Text>
+          </>
+        ) : (
+          <Text>{t('weather_data_not_available')}</Text>
+        )}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Agricultural Tools & Resources</Text>
-        {['Q&A Forum','Weather Forecast','Pest Control',
-          'Irrigation Guide','Crop Planning','Market Prices'
-        ].map((tool) => (
-          <Text key={tool} style={styles.listItem}>• {tool}</Text>
+        <Text style={styles.sectionTitle}>{t('agricultural_tools_resources')}</Text>
+        {['qa_forum','weather_forecast','pest_control',
+          'irrigation_guide','crop_planning','market_prices'
+        ].map((toolKey) => (
+          <Text key={toolKey} style={styles.listItem}>• {t(toolKey)}</Text>
         ))}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>🌾 Community Activity</Text>
-        <Text>127 Questions Asked</Text>
-        <Text>89 Questions Answered</Text>
-        <Text>342 Active Farmers</Text>
-        <Text>156 Tips Shared</Text>
+        <Text style={styles.sectionTitle}>{t('community_activity')}</Text>
+        <Text>127 {t('questions_asked')}</Text>
+        <Text>89 {t('questions_answered')}</Text>
+        <Text>342 {t('active_farmers')}</Text>
+        <Text>156 {t('tips_shared')}</Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>📞 Emergency Contacts</Text>
-        <Text>Agriculture Helpline: 1800-180-1551</Text>
-        <Text>Weather Emergency: 1077</Text>
-        <Text>Kisan Call Center: 1800-180-1551</Text>
+        <Text style={styles.sectionTitle}>{t('emergency_contacts')}</Text>
+        <Text>{t('agriculture_helpline')}: 1800-180-1551</Text>
+        <Text>{t('weather_emergency')}: 1077</Text>
+        <Text>{t('kisan_call_center')}: 1800-180-1551</Text>
       </View>
     </ScrollView>
   );

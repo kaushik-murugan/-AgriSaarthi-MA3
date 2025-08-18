@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useLocalization } from '../context/LanguageContext';
 
 interface AnswerCardProps {
   answer: string;
@@ -9,15 +10,16 @@ interface AnswerCardProps {
 }
 
 const AnswerCard: React.FC<AnswerCardProps> = ({ answer, confidence, explanation, sources }) => {
+  const { t } = useLocalization();
   return (
     <View style={styles.card}>
       <ScrollView>
         <Text style={styles.answer}>{answer}</Text>
-        {confidence !== undefined && <Text style={styles.confidence}>Confidence: {(confidence * 100).toFixed(1)}%</Text>}
-        {explanation && <Text style={styles.explanation}>Explanation: {explanation}</Text>}
+        {confidence !== undefined && <Text style={styles.confidence}>{t('confidence')}: {(confidence * 100).toFixed(1)}%</Text>}
+        {explanation && <Text style={styles.explanation}>{t('explanation')}: {explanation}</Text>}
         {sources && sources.length > 0 && (
           <View>
-            <Text style={styles.sourcesHeader}>Sources:</Text>
+            <Text style={styles.sourcesHeader}>{t('sources')}:</Text>
             {sources.map((src, i) => (
               <Text key={i} style={styles.sourceItem}>- {src}</Text>
             ))}

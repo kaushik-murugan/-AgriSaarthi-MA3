@@ -1,11 +1,13 @@
 // src/screens/PlaceholderScreen.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useLocalization } from '../context/LanguageContext';
 
 export default function PlaceholderScreen({ route }: any) {
+  const { t } = useLocalization();
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>{route.name} - Coming Soon 🚧</Text>
+      <Text style={styles.text}>{route.name}{t('coming_soon')}</Text>
     </View>
   );
 }

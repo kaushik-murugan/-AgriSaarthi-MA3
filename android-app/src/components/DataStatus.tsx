@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useLocalization } from '../context/LanguageContext';
 
 interface DataStatusProps {
   source: 'online' | 'offline';
@@ -7,6 +8,7 @@ interface DataStatusProps {
 }
 
 export default function DataStatus({ source, lastUpdate }: DataStatusProps) {
+  const { t } = useLocalization();
   if (!lastUpdate) return null;
 
   return (
@@ -15,7 +17,7 @@ export default function DataStatus({ source, lastUpdate }: DataStatusProps) {
         ({source})
       </Text>
       <Text style={styles.time}>
-        Last updated: {new Date(lastUpdate).toLocaleString()}
+        {t('last_updated')}: {new Date(lastUpdate).toLocaleString()}
       </Text>
     </View>
   );

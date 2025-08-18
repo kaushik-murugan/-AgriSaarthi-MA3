@@ -3,8 +3,10 @@ import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-nativ
 import { useOfflineData } from '../hooks/useOfflineData';
 import { fetchCropCalendar, CropCalendarEntry } from '../api/cropCalendarApi';
 import DataStatus from '../components/DataStatus';
+import { useLocalization } from '../context/LanguageContext';
 
 export default function CropCalendarScreen() {
+  const { t } = useLocalization();
   const { data: calendar, lastUpdate, source, loading } = useOfflineData<CropCalendarEntry[]>({
     fetchFn: fetchCropCalendar,
     storageKey: 'cropCalendarData'
@@ -14,7 +16,7 @@ export default function CropCalendarScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Crop Calendar</Text>
+      <Text style={styles.header}>{t('crop_calendar')}</Text>
       <DataStatus source={source} lastUpdate={lastUpdate} />
 
       <FlatList

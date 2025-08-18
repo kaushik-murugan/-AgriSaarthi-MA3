@@ -1,6 +1,6 @@
 [
-  { "crop": "Wheat", "price": 2200, "change24h": -0.5, "unit": "₹ / quintal" },
-  { "crop": "Rice", "price": 2500, "change24h": 1.2, "unit": "₹ / quintal" },
-  { "crop": "Sugar", "price": 3200, "change24h": -1.1, "unit": "₹ / quintal" },
-  { "crop": "Cotton", "price": 5800, "change24h": 0.8, "unit": "₹ / quintal" }
+  { "crop": "Wheat", "price": 2200, "change24h": -0.5, "unit": "₹ / quintal", "market": "Delhi", "latitude": 28.6139, "longitude": 77.2090, "date": "2025-08-18" },
+  { "crop": "Rice", "price": 2500, "change24h": 1.2, "unit": "₹ / quintal", "market": "Mumbai", "latitude": 19.0760, "longitude": 72.8777, "date": "2025-08-18" },
+  { "crop": "Sugar", "price": 3200, "change24h": -1.1, "unit": "₹ / quintal", "market": "Chennai", "latitude": 13.0827, "longitude": 80.2707, "date": "2025-08-18" },
+  { "crop": "Cotton", "price": 5800, "change24h": 0.8, "unit": "₹ / quintal", "market": "Ahmedabad", "latitude": 23.0225, "longitude": 72.5714, "date": "2025-08-18" }
 ]

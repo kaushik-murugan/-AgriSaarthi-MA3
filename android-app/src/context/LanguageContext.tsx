@@ -4,6 +4,7 @@ const translations = {
   en: require('../data/translations/en.json'),
   hi: require('../data/translations/hi.json'),
   ta: require('../data/translations/ta.json'),
+  ka: require('../data/translations/ka.json'),
 };
 
 export const LanguageContext = createContext({

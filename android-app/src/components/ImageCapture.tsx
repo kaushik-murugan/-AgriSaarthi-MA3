@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { useLocalization } from '../context/LanguageContext';
 
 interface ImageCaptureProps {
   onImageCaptured: (uri: string) => void;
 }
 
 const ImageCapture: React.FC<ImageCaptureProps> = ({ onImageCaptured }) => {
+  const { t } = useLocalization();
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      alert('Camera permission required');
+      alert(t('camera_permission_required'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -28,7 +30,7 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({ onImageCaptured }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.captureButton} onPress={takePhoto}>
-        <Text style={styles.buttonText}>Capture Crop Image</Text>
+        <Text style={styles.buttonText}>{t('capture_crop_image')}</Text>
       </TouchableOpacity>
       {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
     </View>

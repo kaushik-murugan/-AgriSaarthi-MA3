@@ -7,20 +7,27 @@ import { fetchWeather } from '../api/weatherApi';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Card from '../components/Card';
 import DataStatus from '../components/DataStatus';
+import { useLocalization } from '../context/LanguageContext';
 
 export default function WeatherScreen() {
+  const { t } = useLocalization();
   const { isDark } = useContext(ThemeContext);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
 
   useEffect(() => {
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Location access is required for weather updates.');
+        Alert.alert(t('permission_needed'), t('location_access_required'));
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({});
-      setCoords({ lat: loc.coords.latitude, lon: loc.coords.longitude });
+      try {
+        let loc = await Location.getCurrentPositionAsync({});
+        setCoords({ lat: loc.coords.latitude, lon: loc.coords.longitude });
+      } catch (error) {
+        console.error("Error getting current position:", error);
+        Alert.alert(t('error'), t('failed_to_get_location'));
+      }
     })();
   }, []);
 
@@ -31,7 +38,16 @@ export default function WeatherScreen() {
           return data;
         }
       : async () => null,
-    storageKey: 'weatherData'
+    storageKey: 'weatherData',
+    dependencies: [coords] // Add coords to dependencies
+  });
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, padding: 16 },
+    header: { fontSize: 20, fontWeight: '700', marginBottom: 4 },
+    subHeader: { fontSize: 14, fontWeight: '600', marginBottom: 12 },
+    temp: { fontSize: 24, fontWeight: '700' },
+    errorText: { fontSize: 16, textAlign: 'center', marginTop: 20 },
   });
 
   if (!coords || loading) {
@@ -46,7 +62,7 @@ export default function WeatherScreen() {
     return (
       <ScreenWrapper>
         <Text style={[styles.errorText, { color: isDark ? '#FFC7C7' : '#B91C1C' }]}>
-          Weather data is not available.
+          {t('weather_data_not_available')}
         </Text>
       </ScreenWrapper>
     );
@@ -59,26 +75,26 @@ export default function WeatherScreen() {
     <ScreenWrapper>
       <View style={styles.container}>
         <Text style={[styles.header, { color: isDark ? '#A7F3D0' : '#047857' }]}>
-          Weather & Irrigation Tips
+          {t('weather_irrigation_tips')}
         </Text>
         <DataStatus source={source} lastUpdate={lastUpdate} />
 
         <Card>
           <Text style={[styles.temp, { color: isDark ? '#FFF' : '#111827' }]}>
-            {Math.round(current.temperature)}°C — Condition Code: {current.weathercode}
+            {Math.round(current.temperature)}°C — {t('condition_code')}: {current.weathercode}
           </Text>
           <Text style={{ color: isDark ? '#D1D5DB' : '#6B7280' }}>
-            Windspeed: {Math.round(current.windspeed)} km/h
+            {t('windspeed')}: {Math.round(current.windspeed)} km/h
           </Text>
           <Text style={{ marginTop: 8, color: isDark ? '#FFD700' : '#047857' }}>
             {daily.precipitation_probability_mean[0] > 50
-              ? '💧 Rain likely — hold irrigation today'
-              : '☀ Low rain chance — consider watering your crops'}
+              ? t('rain_likely_hold_irrigation')
+              : t('low_rain_chance_consider_watering')}
           </Text>
         </Card>
 
         <Text style={[styles.subHeader, { color: isDark ? '#A7F3D0' : '#047857' }]}>
-          7-Day Forecast
+          {t('seven_day_forecast')}
         </Text>
         <FlatList
           data={daily.time.map((date, index) => ({
@@ -91,8 +107,8 @@ export default function WeatherScreen() {
           renderItem={({ item }) => (
             <Card>
               <Text>{new Date(item.date).toDateString()}</Text>
-              <Text>Max: {item.maxTemp}°C | Min: {item.minTemp}°C</Text>
-              <Text>Rain Chance: {item.rainProb}%</Text>
+              <Text>{t('max')}: {item.maxTemp}°C | {t('min')}: {item.minTemp}°C</Text>
+              <Text>{t('rain_chance')}: {item.rainProb}%</Text>
             </Card>
           )}
         />
@@ -100,11 +116,3 @@ export default function WeatherScreen() {
     </ScreenWrapper>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: { fontSize: 20, fontWeight: '700', marginBottom: 4 },
-  subHeader: { fontSize: 14, fontWeight: '600', marginBottom: 12 },
-  temp: { fontSize: 24, fontWeight: '700' },
-  errorText: { fontSize: 16, textAlign: 'center', marginTop: 20 },
-});

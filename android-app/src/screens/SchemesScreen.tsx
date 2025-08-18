@@ -3,8 +3,10 @@ import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-nativ
 import { useOfflineData } from '../hooks/useOfflineData';
 import { fetchSchemes, Scheme } from '../api/schemesApi';
 import DataStatus from '../components/DataStatus';
+import { useLocalization } from '../context/LanguageContext';
 
 export default function SchemesScreen() {
+  const { t } = useLocalization();
   const { data: schemes, lastUpdate, source, loading } = useOfflineData<Scheme[]>({
     fetchFn: fetchSchemes,
     storageKey: 'schemesData'
@@ -14,7 +16,7 @@ export default function SchemesScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Government Schemes</Text>
+      <Text style={styles.header}>{t('government_schemes')}</Text>
       <DataStatus source={source} lastUpdate={lastUpdate} />
 
       <FlatList
@@ -24,7 +26,7 @@ export default function SchemesScreen() {
           <View style={styles.card}>
             <Text style={styles.title}>{item.name}</Text>
             <Text>{item.description}</Text>
-            <Text style={styles.eligibility}>Eligibility: {item.eligibility}</Text>
+            <Text style={styles.eligibility}>{t('eligibility')}: {item.eligibility}</Text>
             <Text style={styles.link}>{item.link}</Text>
           </View>
         )}

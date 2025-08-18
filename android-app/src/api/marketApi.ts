@@ -9,10 +9,12 @@ export interface CropPrice {
   market: string;
   date: string;
   unit: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 const backendApi = axios.create({
-  baseURL: 'http://172.16.11.236:3000', // Replace with your deployed backend URL
+  baseURL: 'your_backend_url', // Replace with your deployed backend URL
   timeout: 10000,
 });
 
@@ -21,7 +23,19 @@ const backendApi = axios.create({
  * When online: saves to cache and returns live data.
  * When offline or API fails: returns cached data if available.
  */
-export const fetchMarketPrices = async (): Promise<{
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;  // deg2rad below
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    0.5 - Math.cos(dLat) / 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    (1 - Math.cos(dLon)) / 2;
+
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+export const fetchMarketPrices = async (latitude?: number, longitude?: number): Promise<{
   data: CropPrice[];
   source: 'online' | 'offline';
   lastUpdate?: string;
@@ -31,7 +45,7 @@ export const fetchMarketPrices = async (): Promise<{
   // Try online fetch if connected
   if (network.isConnected) {
     try {
-      const response = await backendApi.get<CropPrice[]>('/market-prices');
+      const response = await backendApi.get<CropPrice[]>('/market-prices', { params: { latitude, longitude } });
       const data = response.data;
       // Save to cache
       await AsyncStorage.setItem('marketPrices', JSON.stringify(data));
@@ -45,9 +59,19 @@ export const fetchMarketPrices = async (): Promise<{
   // Fallback to cached data
   const cached = await AsyncStorage.getItem('marketPrices');
   const lastUpdate = await AsyncStorage.getItem('marketPrices_lastUpdate');
+  let marketData: CropPrice[] = cached ? JSON.parse(cached) : [];
+
+  if (latitude && longitude && marketData.length > 0) {
+    marketData.sort((a, b) => {
+        const distanceA = getDistance(latitude, longitude, a.latitude!, a.longitude!)
+        const distanceB = getDistance(latitude, longitude, b.latitude!, b.longitude!)
+        return distanceA - distanceB;
+    });
+  }
+
 
   return {
-    data: cached ? (JSON.parse(cached) as CropPrice[]) : [],
+    data: marketData,
     source: 'offline',
     lastUpdate: lastUpdate || undefined,
   };
